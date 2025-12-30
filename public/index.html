@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Banking System Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    form { margin-bottom: 20px; }
+    input { margin-right: 10px; padding: 5px; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Banking System Dashboard</h1>
+
+  <h2>Users</h2>
+  <table id="usersTable">
+    <thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <h3>Add User</h3>
+  <form id="userForm">
+    <input type="text" name="name" placeholder="Name" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <button type="submit">Add User</button>
+  </form>
+
+  <h2>Accounts</h2>
+  <table id="accountsTable">
+    <thead><tr><th>ID</th><th>User ID</th><th>Balance</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <h3>Add Account</h3>
+  <form id="accountForm">
+    <input type="number" name="user_id" placeholder="User ID" required>
+    <input type="number" name="balance" placeholder="Balance" required>
+    <button type="submit">Add Account</button>
+  </form>
+
+  <h2>Transactions</h2>
+  <table id="transactionsTable">
+    <thead><tr><th>ID</th><th>Account ID</th><th>Amount</th><th>Date</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <h3>Add Transaction</h3>
+  <form id="transactionForm">
+    <input type="number" name="account_id" placeholder="Account ID" required>
+    <input type="number" name="amount" placeholder="Amount" required>
+    <input type="text" name="date" placeholder="YYYY-MM-DD" required>
+    <button type="submit">Add Transaction</button>
+  </form>
+
+  <script>
+    async function loadData(endpoint, tableId) {
+      try {
+        const res = await fetch(`http://localhost:3000/${endpoint}`);
+        const data = await res.json();
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          Object.values(row).forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(`Error loading ${endpoint}:`, err);
+      }
+    }
+
+    // Load initial data
+    loadData('users', 'usersTable');
+    loadData('accounts', 'accountsTable');
+    loadData('transactions', 'transactionsTable');
+
+    // Handle User Form
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const body = Object.fromEntries(formData.entries());
+      await fetch('/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      loadData('users', 'usersTable');
+      e.target.reset();
+    });
+
+    // Handle Account Form
+    document.getElementById('accountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const body = Object.fromEntries(formData.entries());
+      await fetch('/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      loadData('accounts', 'accountsTable');
+      e.target.reset();
+    });
+
+    // Handle Transaction Form
+    document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const body = Object.fromEntries(formData.entries());
+      await fetch('/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      loadData('transactions', 'transactionsTable');
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

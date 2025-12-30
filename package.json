@@ -1,0 +1,18 @@
+{
+  "name": "banking-system",
+  "version": "1.0.0",
+  "main": "js/dbTest.js",
+  "scripts": {
+    "start": "node js/dbTest.js",
+    "initdb": "node js/initDB.js",
+    "insert": "node js/insertData.js",
+    "query": "node js/queryData.js",
+    "serve": "node js/server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.7",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "bcrypt": "^5.1.1"
+  }
+}

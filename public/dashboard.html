@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Banking System Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    h1 { color: #2c3e50; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+    form { margin-bottom: 20px; display: flex; gap: 10px; }
+    input { padding: 6px; }
+    button { padding: 6px 10px; }
+    .msg { margin-bottom: 10px; color: #c0392b; }
+    .ok { color: #27ae60; }
+    section { margin-bottom: 30px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Banking System Dashboard</h1>
+    <button id="logoutBtn">Logout</button>
+  </header>
+
+  <div id="globalMsg" class="msg"></div>
+
+  <section>
+    <h2>Users</h2>
+    <table id="usersTable">
+      <thead><tr><th>ID</th><th>Name</th><th>Email</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Add User</h3>
+    <form id="userForm">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password (optional)">
+      <button type="submit">Add User</button>
+    </form>
+    <div id="userMsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2>Accounts</h2>
+    <table id="accountsTable">
+      <thead><tr><th>ID</th><th>User ID</th><th>Balance</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Add Account</h3>
+    <form id="accountForm">
+      <input type="number" name="user_id" placeholder="User ID" required>
+      <input type="number" name="balance" placeholder="Balance" required>
+      <button type="submit">Add Account</button>
+    </form>
+    <div id="accountMsg" class="msg"></div>
+  </section>
+
+  <section>
+    <h2>Transactions</h2>
+    <table id="transactionsTable">
+      <thead><tr><th>ID</th><th>Account ID</th><th>Amount</th><th>Date</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <h3>Add Transaction</h3>
+    <form id="transactionForm">
+      <input type="number" name="account_id" placeholder="Account ID" required>
+      <input type="number" name="amount" placeholder="Amount" required>
+      <input type="text" name="date" placeholder="YYYY-MM-DD" required>
+      <button type="submit">Add Transaction</button>
+    </form>
+    <div id="transactionMsg" class="msg"></div>
+  </section>
+
+  <script>
+    async function loadData(endpoint, tableId, msgId) {
+      const msg = msgId ? document.getElementById(msgId) : null;
+      if (msg) msg.textContent = '';
+      try {
+        const res = await fetch(`/${endpoint}`);
+        const data = await res.json();
+        if (!res.ok) {
+          if (msg) msg.textContent = data.error || 'Failed to load ' + endpoint;
+          return;
+        }
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          Object.values(row).forEach(val => {
+            const td = document.createElement('td');
+            td.textContent = val;
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        if (msg) msg.textContent = 'Network error: ' + err.message;
+      }
+    }
+
+    async function postJSON(url, body, msgEl) {
+      msgEl.textContent = '';
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msgEl.textContent = data.error || 'Request failed';
+          return null;
+        }
+        msgEl.textContent = 'Saved';
+        msgEl.classList.add('ok');
+        return data;
+      } catch (err) {
+        msgEl.textContent = 'Network error: ' + err.message;
+        return null;
+      }
+    }
+
+    // Initial loads
+    loadData('users', 'usersTable', 'globalMsg');
+    loadData('accounts', 'accountsTable');
+    loadData('transactions', 'transactionsTable');
+
+    // Add User
+    document.getElementById('userForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      const msg = document.getElementById('userMsg');
+      const ok = await postJSON('/users', body, msg);
+      if (ok) {
+        e.target.reset();
+        loadData('users', 'usersTable');
+      }
+    });
+
+    // Add Account
+    document.getElementById('accountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      const msg = document.getElementById('accountMsg');
+      const ok = await postJSON('/accounts', body, msg);
+      if (ok) {
+        e.target.reset();
+        loadData('accounts', 'accountsTable');
+      }
+    });
+
+    // Add Transaction
+    document.getElementById('transactionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      const msg = document.getElementById('transactionMsg');
+      const ok = await postJSON('/transactions', body, msg);
+      if (ok) {
+        e.target.reset();
+        loadData('transactions', 'transactionsTable');
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const globalMsg = document.getElementById('globalMsg');
+      try {
+        const res = await fetch('/auth/logout', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) {
+          globalMsg.textContent = data.error || 'Logout failed';
+          return;
+        }
+        window.location.href = '/login.html';
+      } catch (err) {
+        globalMsg.textContent = 'Network error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
