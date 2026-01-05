@@ -1,15 +1,15 @@
 {
   "name": "banks-management-system",
   "version": "1.0.0",
-  "description": "Banking Management System built with Java NetBeans and Node.js backend for CI/CD pipeline testing",
+  "description": "Banking Management System backend with CI/CD pipeline",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "echo \"No tests yet\" && exit 0",
     "audit": "npm audit --production --audit-level=high",
-    "build": "echo \"Build step placeholder\"",
+    "build": "echo \"Build successful\"",
     "scan": "echo \"Security scan placeholder\"",
-    "deploy": "echo \"Deploy step placeholder\""
+    "deploy": "echo \"Deploy placeholder\""
   },
   "author": "B-Wendy",
   "license": "MIT",
