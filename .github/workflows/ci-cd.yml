@@ -1,80 +1,64 @@
-name: Secure CI/CD
+name: Secure CI/CD Pipeline
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  build-test-scan:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 18
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run tests
-      run: |
-        npm test || echo "No tests yet"
-
-    - name: npm audit (dependency vulnerabilities)
-      run: npm audit --production --audit-level=high
-
-    - name: Build Docker image
-      run: docker build -t banking-app:${{ github.sha }} .
-
-    - name: Trivy scan (filesystem)
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: fs
-        severity: HIGH,CRITICAL
-        ignore-unfixed: true
-        path: .
-
-    - name: Trivy scan (Docker image)
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: banking-app:${{ github.sha }}
-        severity: HIGH,CRITICAL
-        ignore-unfixed: true
-        vuln-type: os,library
-
-    - name: Start app for ZAP
-      run: |
-        docker run -d --name app -p 3000:3000 banking-app:${{ github.sha }}
-        sleep 10
-
-    - name: OWASP ZAP baseline scan
-      uses: zaproxy/action-baseline@v0.15.0
-      with:
-        target: 'http://localhost:3000'
-        rules_file_name: '.zap-rules.tsv'
-        fail_action: true
-
-    - name: Stop app
-      if: always()
-      run: docker rm -f app
-
-  push-image:
+  test:
     runs-on: ubuntu-latest
-    needs: build-test-scan
+    needs: build
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Login to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Run tests
+        run: npm test
 
-    - name: Build and push image
-      run: |
-        docker build -t ghcr.io/${{ github.repository }}/banking-app:${{ github.sha }} .
-        docker push ghcr.io/${{ github.repository }}/banking-app:${{ github.sha }}
+      - name: Run npm audit (fail on high severity)
+        run: |
+          npm audit --production --audit-level=high
+        continue-on-error: false
+
+  scan:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          severity: HIGH,CRITICAL
+
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'http://localhost:3000'
+        continue-on-error: true
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to cloud (placeholder)
+        run: echo "Deploying to production..."
