@@ -1,7 +1,7 @@
 {
   "name": "banks-management-system",
   "version": "1.0.0",
-  "description": "Banking Management System backend with CI/CD pipeline",
+  "description": "Banking Management System backend with CI/CD pipeline and Render deployment",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -19,5 +19,8 @@
   },
   "devDependencies": {
     "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
